@@ -1,0 +1,25 @@
+_format_version: "2.1"
+_transform: true
+
+services:
+- name: my-secret-service
+  url: http://backend_container:5000
+
+  routes:
+  - name: my-secret-route
+    paths:
+    - /secure-api
+    strip_path: true
+
+  plugins:
+  - name: key-auth
+
+  - name: rate-limiting
+    config:
+      minute: 5
+      policy: local
+
+consumers:
+- username: student_admin
+  keyauth_credentials:
+  - key: noah-secret-key-2024

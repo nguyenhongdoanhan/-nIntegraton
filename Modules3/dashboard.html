@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Revenue Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: "Segoe UI", sans-serif;
+    background: #f5f7fb;
+}
+
+/* HEADER */
+.header {
+    background: #1e293b;
+    color: white;
+    padding: 20px;
+    font-size: 22px;
+    text-align: center;
+}
+
+/* LAYOUT */
+.container {
+    padding: 20px;
+}
+
+/* CARDS */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+}
+
+.card h3 {
+    margin: 0;
+    color: #888;
+    font-size: 14px;
+}
+
+.card h1 {
+    margin: 10px 0 0;
+}
+
+.blue { border-left: 6px solid #3b82f6; }
+.green { border-left: 6px solid #22c55e; }
+.red { border-left: 6px solid #ef4444; }
+
+/* CHART */
+.chart-box {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+}
+
+/* TABLE */
+.table-box {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    background: #1e293b;
+    color: white;
+    padding: 10px;
+}
+
+td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+}
+
+.ok { color: #22c55e; font-weight: bold; }
+.fail { color: #ef4444; font-weight: bold; }
+</style>
+</head>
+
+<body>
+
+<div class="header">📊 Revenue Dashboard</div>
+
+<div class="container">
+
+<div class="cards">
+    <div class="card blue">
+        <h3>Total Revenue</h3>
+        <h1 id="total">0</h1>
+    </div>
+
+    <div class="card green">
+        <h3>Total Customers</h3>
+        <h1 id="customers">0</h1>
+    </div>
+
+    <div class="card red">
+        <h3>Errors</h3>
+        <h1 id="errors">0</h1>
+    </div>
+</div>
+
+<div class="chart-box">
+    <canvas id="chart"></canvas>
+</div>
+
+<div class="table-box">
+    <table>
+        <thead>
+            <tr>
+                <th>Customer ID</th>
+                <th>Amount</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+</div>
+
+</div>
+
+<script>
+async function loadData() {
+    try {
+        const res = await fetch("http://localhost:8000/api/report");
+        const data = await res.json();
+
+        if (!data || data.length === 0) {
+            alert("Không có dữ liệu!");
+            return;
+        }
+
+        let total = 0;
+        let errors = 0;
+
+        data.forEach(x => {
+            total += x.amount;
+            if (x.amount < 30000000) errors++;
+        });
+
+        document.getElementById("total").innerText = total.toLocaleString();
+        document.getElementById("customers").innerText = data.length;
+        document.getElementById("errors").innerText = errors;
+
+        // chart
+        new Chart(document.getElementById("chart"), {
+            type: "bar",
+            data: {
+                labels: data.map(x => x.customer_id),
+                datasets: [{
+                    label: "Revenue",
+                    data: data.map(x => x.amount),
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        // table
+        const tbody = document.getElementById("tableBody");
+
+        data.slice(0, 20).forEach(x => {
+            const status = x.amount < 30000000 ? "FAIL" : "OK";
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${x.customer_id}</td>
+                    <td>${x.amount.toLocaleString()}</td>
+                    <td class="${status === 'OK' ? 'ok' : 'fail'}">
+                        ${status === 'OK' ? '🟢 OK' : '🔴 ERROR'}
+                    </td>
+                </tr>
+            `;
+        });
+
+    } catch (err) {
+        console.error(err);
+        alert("Không gọi được API ❌");
+    }
+}
+
+loadData();
+</script>
+
+</body>
+</html>

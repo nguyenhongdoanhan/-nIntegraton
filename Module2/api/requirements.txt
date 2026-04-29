@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+mysql-connector-python
+pika
+psycopg2-binary

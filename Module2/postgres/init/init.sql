@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS transactions (
+  id SERIAL PRIMARY KEY,
+  order_id INT NOT NULL,
+  amount NUMERIC NOT NULL
+);
